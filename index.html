@@ -151,6 +151,10 @@ body{font-family:'Noto Sans TC',sans-serif;background:var(--bg);color:var(--text
 .shop-item-right{display:flex;align-items:center;gap:8px;flex-shrink:0;}
 .shop-budget{font-size:13px;color:var(--text);border:none;background:transparent;outline:none;font-family:'Noto Sans TC',sans-serif;text-align:right;width:58px;font-weight:500;}
 .shop-qty{font-size:13px;color:var(--text);border:1px solid var(--border2);border-radius:var(--r-xs);background:var(--surface2);outline:none;font-family:'Noto Sans TC',sans-serif;text-align:center;width:38px;padding:2px 4px;}
+.shop-item-calc{display:flex;flex-direction:column;align-items:flex-end;gap:3px;}
+.shop-item-calc-row{display:flex;align-items:center;gap:4px;}
+.shop-x{color:var(--text3);font-size:12px;flex-shrink:0;}
+.shop-subtotal{font-size:11px;color:var(--accent);font-weight:500;white-space:nowrap;}
 .shop-currency-sel{font-size:11px;border:1px solid var(--border2);border-radius:var(--r-xs);background:var(--surface2);color:var(--text2);outline:none;padding:2px 4px;font-family:'Noto Sans TC',sans-serif;cursor:pointer;}
 .shop-item-del{font-size:18px;color:var(--text3);cursor:pointer;line-height:1;}
 .shop-item-del:active{color:var(--red);}
@@ -589,13 +593,18 @@ function renderShopping(){
           <input type="text" class="shop-item-note" value="${esc(item.note)}" placeholder="備注" onchange="updShop(${si},${ii},'note',this.value)">
         </div>
         <div class="shop-item-right">
-          <select class="shop-currency-sel" onchange="updShop(${si},${ii},'currency',this.value)">
-            <option value="TWD" ${cur==='TWD'?'selected':''}>TWD</option>
-            <option value="JPY" ${cur==='JPY'?'selected':''}>JPY</option>
-          </select>
-          <input type="number" class="shop-budget" value="${item.budget||''}" placeholder="單價" onchange="updShop(${si},${ii},'budget',+this.value)" min="0">
-          <span style="color:var(--text3);font-size:12px;flex-shrink:0;">×</span>
-          <input type="number" class="shop-qty" value="${item.qty||1}" placeholder="1" onchange="updShop(${si},${ii},'qty',+this.value)" min="1">
+          <div class="shop-item-calc">
+            <div class="shop-item-calc-row">
+              <select class="shop-currency-sel" onchange="updShop(${si},${ii},'currency',this.value)">
+                <option value="TWD" ${cur==='TWD'?'selected':''}>TWD</option>
+                <option value="JPY" ${cur==='JPY'?'selected':''}>JPY</option>
+              </select>
+              <input type="number" class="shop-budget" value="${item.budget||''}" placeholder="單價" onchange="updShop(${si},${ii},'budget',+this.value)" min="0">
+              <span class="shop-x">×</span>
+              <input type="number" class="shop-qty" value="${item.qty||1}" placeholder="1" onchange="updShop(${si},${ii},'qty',+this.value)" min="1">
+            </div>
+            <div class="shop-subtotal">小計 ${Math.round(toTWD(item.budget,cur,item.qty||1)).toLocaleString()} TWD</div>
+          </div>
           <span class="shop-item-del" onclick="delShopItem(${si},${ii})">×</span>
         </div>
       </div>`;}).join('');
