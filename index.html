@@ -75,10 +75,10 @@ body{font-family:'Noto Sans TC',sans-serif;background:var(--bg);color:var(--text
 .m-chip{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:100px;border:1px solid var(--border2);background:var(--surface2);font-size:13px;color:var(--text2);}
 .m-chip-del{cursor:pointer;color:var(--text3);font-size:16px;line-height:1;flex-shrink:0;}
 .m-chip-del:active{color:var(--red);}
-.add-member-row{display:flex;gap:8px;}
-.add-member-row input{flex:1;border:1px solid var(--border2);border-radius:var(--r-xs);padding:8px 12px;font-size:14px;font-family:'Noto Sans TC',sans-serif;background:var(--surface);outline:none;color:var(--text);}
+.add-member-row{display:flex;flex-direction:column;gap:8px;}
+.add-member-row input{width:100%;border:1px solid var(--border2);border-radius:var(--r-xs);padding:10px 12px;font-size:14px;font-family:'Noto Sans TC',sans-serif;background:var(--surface);outline:none;color:var(--text);}
 .add-member-row input:focus{border-color:var(--accent);}
-.add-member-row button{padding:8px 14px;border-radius:var(--r-xs);background:var(--accent);color:#fff;border:none;font-size:13px;cursor:pointer;font-family:'Noto Sans TC',sans-serif;white-space:nowrap;}
+.add-member-row button{width:100%;padding:10px;border-radius:var(--r-xs);background:var(--accent);color:#fff;border:none;font-size:14px;cursor:pointer;font-family:'Noto Sans TC',sans-serif;font-weight:500;}
 
 /* ── FILTER ── */
 .filter-row{display:flex;gap:6px;margin-bottom:14px;overflow-x:auto;padding-bottom:2px;-webkit-overflow-scrolling:touch;}
@@ -119,9 +119,8 @@ body{font-family:'Noto Sans TC',sans-serif;background:var(--bg);color:var(--text
 .add-item-btn:active{background:var(--accent-light);}
 
 /* ── MAP ── */
-.day-map{height:200px;border-top:1px solid var(--border);overflow:hidden;position:relative;}
-.day-map iframe{width:100%;height:100%;border:none;display:block;}
-.map-empty{width:100%;height:100%;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:6px;color:var(--text3);font-size:13px;background:var(--surface2);}
+.open-map-btn{display:flex;align-items:center;justify-content:center;gap:6px;padding:12px 14px;color:var(--accent);font-size:14px;border-top:1px solid var(--border);text-decoration:none;background:var(--accent-light);font-weight:500;}
+.open-map-btn:active{background:var(--accent);color:#fff;}
 
 .add-day-btn{width:100%;padding:13px;border:1.5px dashed var(--border2);border-radius:var(--r);background:transparent;cursor:pointer;color:var(--text3);font-size:14px;font-family:'Noto Sans TC',sans-serif;transition:all 0.15s;display:flex;align-items:center;justify-content:center;gap:8px;margin-top:4px;}
 .add-day-btn:active{border-color:var(--accent);color:var(--accent);background:var(--accent-light);}
@@ -492,15 +491,6 @@ function renderDays(){
       </div>`;
     }).join('');
 
-    const mapUrl = buildMapUrl(day.items||[]);
-    const mapLink = buildMapLink(day.items||[]);
-    const mapHtml = mapUrl
-      ? `<div class="day-map">
-           <iframe src="${mapUrl}" allowfullscreen loading="lazy"></iframe>
-           <a href="${mapLink}" target="_blank" style="position:absolute;bottom:8px;right:8px;background:var(--surface);border:1px solid var(--border2);border-radius:var(--r-xs);padding:4px 10px;font-size:12px;color:var(--accent);text-decoration:none;box-shadow:var(--shadow);">在地圖開啟 ↗</a>
-         </div>`
-      : `<div class="day-map"><div class="map-empty"><span>🗺️</span><span>新增地址後自動顯示地圖</span></div></div>`;
-
     const card = document.createElement('div');
     card.className='day-card';
     card.innerHTML=`
@@ -511,7 +501,6 @@ function renderDays(){
       </div>
       <div class="item-list">${itemsHtml}</div>
       <div class="add-item-btn" onclick="addItem(${di})">＋ 新增行程</div>
-      ${mapHtml}
     `;
     container.appendChild(card);
   });
