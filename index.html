@@ -326,6 +326,7 @@ const EXP_COLORS = ['--accent','--amber','--teal','--purple','--pink','--text2']
 
 let state = { tripName:'', members:[], days:[], shopping_xuan:[], shopping_peng:[], expense:[] };
 let shopPersonIdx = 0;
+let dragSrc = null;
 let jpyRate = 0.22; // fallback
 
 async function fetchJpyRate(){
@@ -562,6 +563,21 @@ window.delDay = (di)=>{
 
 // ── Shopping ──
 function getShopKey(){ return shopPersonIdx===0?'shopping_xuan':'shopping_peng'; }
+function dragStart(e,si,ii){ dragSrc={si,ii}; e.currentTarget.style.opacity='0.4'; }
+function dragEnd(e){ e.currentTarget.style.opacity='1'; }
+function dragOver(e){ e.preventDefault(); e.currentTarget.style.background='var(--accent-light)'; }
+function dragDrop(e,si,ii){
+  e.currentTarget.style.background='';
+  if(!dragSrc||dragSrc.si!==si) return;
+  const k=getShopKey();
+  const items=state[k][si].items;
+  const from=dragSrc.ii, to=ii;
+  if(from===to) return;
+  const moved=items.splice(from,1)[0];
+  items.splice(to,0,moved);
+  dragSrc=null;
+  renderShopping(); save();
+}
 window.switchShopPerson=function(idx,el){
   shopPersonIdx=idx;
   document.querySelectorAll('.sptab').forEach(t=>t.classList.remove('active'));
@@ -585,27 +601,31 @@ function renderShopping(){
     budget+=secBudget; done+=secDone; total+=items.length;
     const rows=items.map((item,ii)=>{
       const cur = item.currency||'TWD';
+      const subtotal = Math.round(toTWD(item.budget,cur,item.qty||1)).toLocaleString();
       return `
-      <div class="shop-item ${item.checked?'done':''}">
+      <div class="shop-item ${item.checked?'done':''}" draggable="true"
+        ondragstart="dragStart(event,${si},${ii})"
+        ondragover="dragOver(event)"
+        ondrop="dragDrop(event,${si},${ii})"
+        ondragend="dragEnd(event)">
+        <span class="drag-handle">⠿</span>
         <input type="checkbox" class="shop-cb" ${item.checked?'checked':''} onchange="toggleShop(${si},${ii},this.checked)">
-        <div class="shop-item-main">
-          <input type="text" class="shop-item-name" value="${esc(item.name)}" placeholder="品項名稱" onchange="updShop(${si},${ii},'name',this.value)">
-          <input type="text" class="shop-item-note" value="${esc(item.note)}" placeholder="備注" onchange="updShop(${si},${ii},'note',this.value)">
-        </div>
-        <div class="shop-item-right">
-          <div class="shop-item-calc">
-            <div class="shop-item-calc-row">
-              <select class="shop-currency-sel" onchange="updShop(${si},${ii},'currency',this.value)">
-                <option value="TWD" ${cur==='TWD'?'selected':''}>TWD</option>
-                <option value="JPY" ${cur==='JPY'?'selected':''}>JPY</option>
-              </select>
-              <input type="number" class="shop-budget" value="${item.budget||''}" placeholder="單價" onchange="updShop(${si},${ii},'budget',+this.value)" min="0">
-              <span class="shop-x">×</span>
-              <input type="number" class="shop-qty" value="${item.qty||1}" placeholder="1" onchange="updShop(${si},${ii},'qty',+this.value)" min="1">
-            </div>
-            <div class="shop-subtotal">小計 ${Math.round(toTWD(item.budget,cur,item.qty||1)).toLocaleString()} TWD</div>
+        <div class="shop-item-body">
+          <div class="shop-item-row1">
+            <input type="text" class="shop-item-name" value="${esc(item.name)}" placeholder="品項名稱" onchange="updShop(${si},${ii},'name',this.value)">
+            <span class="shop-item-del" onclick="delShopItem(${si},${ii})">×</span>
           </div>
-          <span class="shop-item-del" onclick="delShopItem(${si},${ii})">×</span>
+          <div class="shop-item-row2">
+            <select class="shop-currency-sel" onchange="updShop(${si},${ii},'currency',this.value)">
+              <option value="TWD" ${cur==='TWD'?'selected':''}>TWD</option>
+              <option value="JPY" ${cur==='JPY'?'selected':''}>JPY</option>
+            </select>
+            <input type="number" class="shop-budget" value="${item.budget||''}" placeholder="單價" onchange="updShop(${si},${ii},'budget',+this.value)" min="0">
+            <span class="shop-x">×</span>
+            <input type="number" class="shop-qty" value="${item.qty||1}" placeholder="數量" onchange="updShop(${si},${ii},'qty',+this.value)" min="1">
+            <span class="shop-subtotal">＝ ${subtotal} TWD</span>
+          </div>
+          <input type="text" class="shop-item-note" value="${esc(item.note)}" placeholder="備注" onchange="updShop(${si},${ii},'note',this.value)">
         </div>
       </div>`;}).join('');
     const sec_el=document.createElement('div');
