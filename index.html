@@ -149,11 +149,15 @@ body{font-family:'Noto Sans TC',sans-serif;background:var(--bg);color:var(--text
 .shop-item-name::placeholder{color:var(--text3);}
 .shop-item-note{font-size:12px;color:var(--text3);border:none;background:transparent;outline:none;font-family:'Noto Sans TC',sans-serif;width:100%;margin-top:2px;}
 .shop-item-right{display:flex;align-items:center;gap:8px;flex-shrink:0;}
-.shop-budget{font-size:13px;color:var(--text2);border:none;background:transparent;outline:none;font-family:'Noto Sans TC',sans-serif;text-align:right;width:70px;}
+.shop-budget{font-size:13px;color:var(--text);border:none;background:transparent;outline:none;font-family:'Noto Sans TC',sans-serif;text-align:right;width:65px;font-weight:500;}
+.shop-currency-sel{font-size:11px;border:1px solid var(--border2);border-radius:var(--r-xs);background:var(--surface2);color:var(--text2);outline:none;padding:2px 4px;font-family:'Noto Sans TC',sans-serif;cursor:pointer;}
 .shop-item-del{font-size:18px;color:var(--text3);cursor:pointer;line-height:1;}
 .shop-item-del:active{color:var(--red);}
 .shop-add-item{display:flex;align-items:center;gap:8px;padding:11px 14px;color:var(--accent);font-size:14px;cursor:pointer;}
 .shop-add-item:active{background:var(--accent-light);}
+.shop-person-tabs{display:flex;background:var(--surface2);border:1px solid var(--border);border-radius:var(--r);padding:4px;gap:4px;margin-bottom:14px;}
+.sptab{flex:1;padding:10px;border-radius:var(--r-sm);font-size:15px;font-weight:500;border:none;background:transparent;color:var(--text3);cursor:pointer;font-family:'Noto Sans TC',sans-serif;transition:all 0.15s;}
+.sptab.active{background:var(--surface);color:var(--accent);box-shadow:0 1px 3px rgba(0,0,0,0.08);}
 .add-sec-btn{width:100%;padding:13px;border:1.5px dashed var(--border2);border-radius:var(--r);background:transparent;cursor:pointer;color:var(--text3);font-size:14px;font-family:'Noto Sans TC',sans-serif;transition:all 0.15s;display:flex;align-items:center;justify-content:center;gap:8px;}
 .add-sec-btn:active{border-color:var(--pink);color:var(--pink);background:var(--pink-light);}
 
@@ -163,7 +167,7 @@ body{font-family:'Noto Sans TC',sans-serif;background:var(--bg);color:var(--text
 .exp-total-val{font-size:32px;font-weight:700;line-height:1;}
 .exp-total-sub{font-size:12px;opacity:0.7;margin-top:4px;}
 .exp-cats{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;margin-bottom:14px;-webkit-overflow-scrolling:touch;}
-.exp-cat-chip{flex-shrink:0;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:10px 14px;text-align:center;min-width:80px;box-shadow:var(--shadow);}
+.exp-cat-chip{flex-shrink:0;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:10px 16px;text-align:center;min-width:100px;box-shadow:var(--shadow);}
 .exp-cat-label{font-size:11px;color:var(--text3);margin-bottom:2px;}
 .exp-cat-val{font-size:15px;font-weight:700;color:var(--text);}
 
@@ -247,12 +251,14 @@ body{font-family:'Noto Sans TC',sans-serif;background:var(--bg);color:var(--text
 
   <!-- ══ 購物清單 ══ -->
   <div class="page" id="page-shopping">
-    <div class="page-hdr">
-      <div class="page-hdr-title">🛍 購物清單</div>
-      <div class="stat-pills">
-        <div class="stat-pill">預算 <strong id="sh-budget">0</strong> TWD</div>
-        <div class="stat-pill">已買 <strong id="sh-done">0</strong>/<strong id="sh-total">0</strong></div>
-      </div>
+    <div class="shop-person-tabs">
+      <button class="sptab active" onclick="switchShopPerson(0,this)">軒</button>
+      <button class="sptab" onclick="switchShopPerson(1,this)">芃</button>
+    </div>
+    <div class="stat-pills" style="margin-bottom:14px;">
+      <div class="stat-pill">預算合計 <strong id="sh-budget">0</strong> TWD</div>
+      <div class="stat-pill" id="sh-rate-pill" style="font-size:11px;">匯率載入中...</div>
+      <div class="stat-pill">已買 <strong id="sh-done">0</strong>/<strong id="sh-total">0</strong></div>
     </div>
     <div id="shopContainer"></div>
     <button class="add-sec-btn" onclick="addShopSec()">＋ 新增店家 / 分類</button>
@@ -313,7 +319,23 @@ const CATS_ITEM = ['交通','餐廳','住宿','景點','購物','其他'];
 const CATS_EXP  = ['交通','餐飲','住宿','景點','購物','其他'];
 const EXP_COLORS = ['--accent','--amber','--teal','--purple','--pink','--text2'];
 
-let state = { tripName:'', members:[], days:[], shopping:[], expense:[] };
+let state = { tripName:'', members:[], days:[], shopping_xuan:[], shopping_peng:[], expense:[] };
+let shopPersonIdx = 0;
+let jpyRate = 0.22; // fallback
+
+async function fetchJpyRate(){
+  try {
+    const res = await fetch('https://api.frankfurter.app/latest?from=JPY&to=TWD');
+    const data = await res.json();
+    jpyRate = data.rates.TWD;
+    const pill = document.getElementById('sh-rate-pill');
+    if(pill) pill.textContent = `1 JPY ≈ ${jpyRate.toFixed(3)} TWD`;
+    renderShopping();
+  } catch(e) {
+    const pill = document.getElementById('sh-rate-pill');
+    if(pill) pill.textContent = `1 JPY ≈ ${jpyRate.toFixed(3)} TWD（預設）`;
+  }
+}
 let filter = 'all';
 let saveTimer = null;
 
@@ -342,19 +364,22 @@ const DEFAULT = {
       {time:'14:30',cat:'交通',name:'搭機返台',addr:'關西國際機場',status:'pending',who:[],note:''},
     ]},
   ],
-  shopping:[
-    { section:'🏪 松本清 / 大國藥妝', items:[
-      {name:'肌研極潤化妝水',budget:350,checked:false,note:''},
-      {name:'花王蒸氣眼罩',budget:280,checked:false,note:'薰衣草'},
-      {name:'曼秀雷敦護唇膏',budget:120,checked:false,note:''},
+  shopping_xuan:[
+    { section:'🏪 藥妝店', items:[
+      {name:'肌研極潤化妝水',budget:350,currency:'TWD',checked:false,note:''},
+      {name:'花王蒸氣眼罩',budget:280,currency:'TWD',checked:false,note:'薰衣草'},
     ]},
-    { section:'🛒 超市 / 便利商店', items:[
-      {name:'零食伴手禮',budget:1500,checked:false,note:''},
-      {name:'抹茶 Kit Kat',budget:400,checked:false,note:''},
+    { section:'🛒 超市', items:[
+      {name:'零食伴手禮',budget:1500,currency:'TWD',checked:false,note:''},
     ]},
-    { section:'🏬 心齋橋 / 道頓堀', items:[
-      {name:'優衣庫限定款',budget:2000,checked:false,note:''},
-      {name:'寶可夢中心',budget:1000,checked:false,note:''},
+  ],
+  shopping_peng:[
+    { section:'🏪 藥妝店', items:[
+      {name:'曼秀雷敦護唇膏',budget:120,currency:'TWD',checked:false,note:''},
+    ]},
+    { section:'🏬 心齋橋', items:[
+      {name:'優衣庫限定款',budget:2000,currency:'JPY',checked:false,note:''},
+      {name:'寶可夢中心',budget:1000,currency:'JPY',checked:false,note:''},
     ]},
   ],
   expense:[
@@ -531,16 +556,30 @@ window.delDay = (di)=>{
 };
 
 // ── Shopping ──
+function getShopKey(){ return shopPersonIdx===0?'shopping_xuan':'shopping_peng'; }
+window.switchShopPerson=function(idx,el){
+  shopPersonIdx=idx;
+  document.querySelectorAll('.sptab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  renderShopping();
+};
+function toTWD(amount, currency){
+  if(currency==='JPY') return (Number(amount)||0) * jpyRate;
+  return Number(amount)||0;
+}
 function renderShopping(){
+  const key=getShopKey();
   const container=document.getElementById('shopContainer');
   container.innerHTML='';
   let budget=0,done=0,total=0;
-  (state.shopping||[]).forEach((sec,si)=>{
+  (state[key]||[]).forEach((sec,si)=>{
     const items=sec.items||[];
     const secDone=items.filter(i=>i.checked).length;
-    const secBudget=items.reduce((s,i)=>s+(Number(i.budget)||0),0);
+    const secBudget=items.reduce((s,i)=>s+toTWD(i.budget,i.currency||'TWD'),0);
     budget+=secBudget; done+=secDone; total+=items.length;
-    const rows=items.map((item,ii)=>`
+    const rows=items.map((item,ii)=>{
+      const cur = item.currency||'TWD';
+      return `
       <div class="shop-item ${item.checked?'done':''}">
         <input type="checkbox" class="shop-cb" ${item.checked?'checked':''} onchange="toggleShop(${si},${ii},this.checked)">
         <div class="shop-item-main">
@@ -548,10 +587,14 @@ function renderShopping(){
           <input type="text" class="shop-item-note" value="${esc(item.note)}" placeholder="備注" onchange="updShop(${si},${ii},'note',this.value)">
         </div>
         <div class="shop-item-right">
-          <input type="number" class="shop-budget" value="${item.budget||''}" placeholder="預算" onchange="updShop(${si},${ii},'budget',+this.value)">
+          <select class="shop-currency-sel" onchange="updShop(${si},${ii},'currency',this.value)">
+            <option value="TWD" ${cur==='TWD'?'selected':''}>TWD</option>
+            <option value="JPY" ${cur==='JPY'?'selected':''}>JPY</option>
+          </select>
+          <input type="number" class="shop-budget" value="${item.budget||''}" placeholder="金額" onchange="updShop(${si},${ii},'budget',+this.value)">
           <span class="shop-item-del" onclick="delShopItem(${si},${ii})">×</span>
         </div>
-      </div>`).join('');
+      </div>`;}).join('');
     const sec_el=document.createElement('div');
     sec_el.className='shop-sec';
     sec_el.innerHTML=`
@@ -565,17 +608,17 @@ function renderShopping(){
     `;
     container.appendChild(sec_el);
   });
-  document.getElementById('sh-budget').textContent=budget.toLocaleString();
+  document.getElementById('sh-budget').textContent=Math.round(budget).toLocaleString();
   document.getElementById('sh-done').textContent=done;
   document.getElementById('sh-total').textContent=total;
 }
-window.updShopSec=(si,v)=>{state.shopping[si].section=v;save();};
-window.updShop=(si,ii,f,v)=>{state.shopping[si].items[ii][f]=v;save();renderShopping();};
-window.toggleShop=(si,ii,v)=>{state.shopping[si].items[ii].checked=v;renderShopping();save();};
-window.addShopItem=(si)=>{(state.shopping[si].items=state.shopping[si].items||[]).push({name:'',budget:0,checked:false,note:''});renderShopping();save();};
-window.delShopItem=(si,ii)=>{state.shopping[si].items.splice(ii,1);renderShopping();save();};
-window.addShopSec=()=>{(state.shopping=state.shopping||[]).push({section:'🏪 新店家',items:[]});renderShopping();save();};
-window.delShopSec=(si)=>{if(!confirm('確定刪除？'))return;state.shopping.splice(si,1);renderShopping();save();};
+window.updShopSec=(si,v)=>{const k=getShopKey();state[k][si].section=v;save();};
+window.updShop=(si,ii,f,v)=>{const k=getShopKey();state[k][si].items[ii][f]=v;save();renderShopping();};
+window.toggleShop=(si,ii,v)=>{const k=getShopKey();state[k][si].items[ii].checked=v;renderShopping();save();};
+window.addShopItem=(si)=>{const k=getShopKey();(state[k][si].items=state[k][si].items||[]).push({name:'',budget:0,currency:'TWD',checked:false,note:''});renderShopping();save();};
+window.delShopItem=(si,ii)=>{const k=getShopKey();state[k][si].items.splice(ii,1);renderShopping();save();};
+window.addShopSec=()=>{const k=getShopKey();(state[k]=state[k]||[]).push({section:'🏪 新店家',items:[]});renderShopping();save();};
+window.delShopSec=(si)=>{if(!confirm('確定刪除？'))return;const k=getShopKey();state[k].splice(si,1);renderShopping();save();};
 
 // ── Expense ──
 function renderExpense(){
@@ -628,6 +671,7 @@ function renderExpense(){
     <div class="exp-cat-chip">
       <div class="exp-cat-label">${cat}</div>
       <div class="exp-cat-val">${val.toLocaleString()}</div>
+      <div style="font-size:10px;color:var(--text3);margin-top:1px;">TWD</div>
     </div>`).join('');
 }
 window.updExpSec=(si,v)=>{state.expense[si].section=v;save();};
@@ -657,6 +701,7 @@ onValue(dbRef,(snapshot)=>{
   renderDays();
   renderShopping();
   renderExpense();
+  fetchJpyRate();
   setSyncStatus('online');
   const overlay=document.getElementById('loading');
   overlay.classList.add('hide');
