@@ -149,7 +149,8 @@ body{font-family:'Noto Sans TC',sans-serif;background:var(--bg);color:var(--text
 .shop-item-name::placeholder{color:var(--text3);}
 .shop-item-note{font-size:12px;color:var(--text3);border:none;background:transparent;outline:none;font-family:'Noto Sans TC',sans-serif;width:100%;margin-top:2px;}
 .shop-item-right{display:flex;align-items:center;gap:8px;flex-shrink:0;}
-.shop-budget{font-size:13px;color:var(--text);border:none;background:transparent;outline:none;font-family:'Noto Sans TC',sans-serif;text-align:right;width:65px;font-weight:500;}
+.shop-budget{font-size:13px;color:var(--text);border:none;background:transparent;outline:none;font-family:'Noto Sans TC',sans-serif;text-align:right;width:58px;font-weight:500;}
+.shop-qty{font-size:13px;color:var(--text);border:1px solid var(--border2);border-radius:var(--r-xs);background:var(--surface2);outline:none;font-family:'Noto Sans TC',sans-serif;text-align:center;width:38px;padding:2px 4px;}
 .shop-currency-sel{font-size:11px;border:1px solid var(--border2);border-radius:var(--r-xs);background:var(--surface2);color:var(--text2);outline:none;padding:2px 4px;font-family:'Noto Sans TC',sans-serif;cursor:pointer;}
 .shop-item-del{font-size:18px;color:var(--text3);cursor:pointer;line-height:1;}
 .shop-item-del:active{color:var(--red);}
@@ -367,19 +368,19 @@ const DEFAULT = {
   shopping_xuan:[
     { section:'🏪 藥妝店', items:[
       {name:'肌研極潤化妝水',budget:350,currency:'TWD',checked:false,note:''},
-      {name:'花王蒸氣眼罩',budget:280,currency:'TWD',checked:false,note:'薰衣草'},
+      {name:'花王蒸氣眼罩',budget:280,currency:'TWD',qty:1,checked:false,note:'薰衣草'},
     ]},
     { section:'🛒 超市', items:[
-      {name:'零食伴手禮',budget:1500,currency:'TWD',checked:false,note:''},
+      {name:'零食伴手禮',budget:1500,currency:'TWD',qty:1,checked:false,note:''},
     ]},
   ],
   shopping_peng:[
     { section:'🏪 藥妝店', items:[
-      {name:'曼秀雷敦護唇膏',budget:120,currency:'TWD',checked:false,note:''},
+      {name:'曼秀雷敦護唇膏',budget:120,currency:'TWD',qty:1,checked:false,note:''},
     ]},
     { section:'🏬 心齋橋', items:[
-      {name:'優衣庫限定款',budget:2000,currency:'JPY',checked:false,note:''},
-      {name:'寶可夢中心',budget:1000,currency:'JPY',checked:false,note:''},
+      {name:'優衣庫限定款',budget:2000,currency:'JPY',qty:1,checked:false,note:''},
+      {name:'寶可夢中心',budget:1000,currency:'JPY',qty:1,checked:false,note:''},
     ]},
   ],
   expense:[
@@ -563,9 +564,10 @@ window.switchShopPerson=function(idx,el){
   el.classList.add('active');
   renderShopping();
 };
-function toTWD(amount, currency){
-  if(currency==='JPY') return (Number(amount)||0) * jpyRate;
-  return Number(amount)||0;
+function toTWD(amount, currency, qty){
+  const q = Number(qty)||1;
+  if(currency==='JPY') return (Number(amount)||0) * q * jpyRate;
+  return (Number(amount)||0) * q;
 }
 function renderShopping(){
   const key=getShopKey();
@@ -575,7 +577,7 @@ function renderShopping(){
   (state[key]||[]).forEach((sec,si)=>{
     const items=sec.items||[];
     const secDone=items.filter(i=>i.checked).length;
-    const secBudget=items.reduce((s,i)=>s+toTWD(i.budget,i.currency||'TWD'),0);
+    const secBudget=items.reduce((s,i)=>s+toTWD(i.budget,i.currency||'TWD',i.qty||1),0);
     budget+=secBudget; done+=secDone; total+=items.length;
     const rows=items.map((item,ii)=>{
       const cur = item.currency||'TWD';
@@ -591,7 +593,9 @@ function renderShopping(){
             <option value="TWD" ${cur==='TWD'?'selected':''}>TWD</option>
             <option value="JPY" ${cur==='JPY'?'selected':''}>JPY</option>
           </select>
-          <input type="number" class="shop-budget" value="${item.budget||''}" placeholder="金額" onchange="updShop(${si},${ii},'budget',+this.value)">
+          <input type="number" class="shop-budget" value="${item.budget||''}" placeholder="單價" onchange="updShop(${si},${ii},'budget',+this.value)" min="0">
+          <span style="color:var(--text3);font-size:12px;flex-shrink:0;">×</span>
+          <input type="number" class="shop-qty" value="${item.qty||1}" placeholder="1" onchange="updShop(${si},${ii},'qty',+this.value)" min="1">
           <span class="shop-item-del" onclick="delShopItem(${si},${ii})">×</span>
         </div>
       </div>`;}).join('');
@@ -615,7 +619,7 @@ function renderShopping(){
 window.updShopSec=(si,v)=>{const k=getShopKey();state[k][si].section=v;save();};
 window.updShop=(si,ii,f,v)=>{const k=getShopKey();state[k][si].items[ii][f]=v;save();renderShopping();};
 window.toggleShop=(si,ii,v)=>{const k=getShopKey();state[k][si].items[ii].checked=v;renderShopping();save();};
-window.addShopItem=(si)=>{const k=getShopKey();(state[k][si].items=state[k][si].items||[]).push({name:'',budget:0,currency:'TWD',checked:false,note:''});renderShopping();save();};
+window.addShopItem=(si)=>{const k=getShopKey();(state[k][si].items=state[k][si].items||[]).push({name:'',budget:0,currency:'TWD',qty:1,checked:false,note:''});renderShopping();save();};
 window.delShopItem=(si,ii)=>{const k=getShopKey();state[k][si].items.splice(ii,1);renderShopping();save();};
 window.addShopSec=()=>{const k=getShopKey();(state[k]=state[k]||[]).push({section:'🏪 新店家',items:[]});renderShopping();save();};
 window.delShopSec=(si)=>{if(!confirm('確定刪除？'))return;const k=getShopKey();state[k].splice(si,1);renderShopping();save();};
