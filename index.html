@@ -327,15 +327,28 @@ let jpyRate = 0.22; // fallback
 
 async function fetchJpyRate(){
   try {
-    const res = await fetch('https://api.frankfurter.app/latest?from=JPY&to=TWD');
+    // Frankfurter 不支援 JPY→TWD，改用 TWD→JPY 再取倒數
+    const res = await fetch('https://api.frankfurter.app/latest?from=TWD&to=JPY');
+    if(!res.ok) throw new Error('API error');
     const data = await res.json();
-    jpyRate = data.rates.TWD;
+    const twdPerJpy = 1 / data.rates.JPY;
+    jpyRate = Math.round(twdPerJpy * 1000) / 1000;
     const pill = document.getElementById('sh-rate-pill');
     if(pill) pill.textContent = `1 JPY ≈ ${jpyRate.toFixed(3)} TWD`;
     renderShopping();
   } catch(e) {
-    const pill = document.getElementById('sh-rate-pill');
-    if(pill) pill.textContent = `1 JPY ≈ ${jpyRate.toFixed(3)} TWD（預設）`;
+    // fallback: try exchangerate-api
+    try {
+      const res2 = await fetch('https://open.er-api.com/v6/latest/JPY');
+      const data2 = await res2.json();
+      jpyRate = Math.round(data2.rates.TWD * 1000) / 1000;
+      const pill = document.getElementById('sh-rate-pill');
+      if(pill) pill.textContent = `1 JPY ≈ ${jpyRate.toFixed(3)} TWD`;
+      renderShopping();
+    } catch(e2) {
+      const pill = document.getElementById('sh-rate-pill');
+      if(pill) pill.textContent = `1 JPY ≈ ${jpyRate.toFixed(3)} TWD（預設）`;
+    }
   }
 }
 let filter = 'all';
