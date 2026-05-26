@@ -95,8 +95,11 @@ body{font-family:'Noto Sans TC',sans-serif;background:var(--bg);color:var(--text
 
 /* ── ITEM ROW (mobile card style) ── */
 .item-list{padding:4px 0;}
-.item-row{padding:10px 14px;border-bottom:1px solid var(--border);position:relative;cursor:default;}
-.item-drag-handle{font-size:14px;color:var(--border2);cursor:grab;user-select:none;flex-shrink:0;margin-right:2px;}
+.item-row{padding:10px 14px;border-bottom:1px solid var(--border);position:relative;}
+.item-arrows{display:flex;flex-direction:column;gap:1px;flex-shrink:0;}
+.arr-btn{width:22px;height:18px;border:none;background:var(--surface2);border-radius:3px;font-size:9px;color:var(--text3);cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;line-height:1;}
+.arr-btn:active{background:var(--accent-light);color:var(--accent);}
+.arr-btn:disabled{opacity:0.2;cursor:default;}
 .item-row:last-child{border-bottom:none;}
 .item-row.cancelled{opacity:0.4;}
 .item-top{display:flex;align-items:center;gap:6px;margin-bottom:6px;}
@@ -144,7 +147,6 @@ body{font-family:'Noto Sans TC',sans-serif;background:var(--bg);color:var(--text
 .shop-item:last-child{border-bottom:none;}
 .shop-item.done{opacity:0.45;}
 .shop-item.done .shop-item-name{text-decoration:line-through;}
-.drag-handle{font-size:13px;color:var(--border2);flex-shrink:0;cursor:grab;user-select:none;}
 .shop-cb{width:15px;height:15px;flex-shrink:0;cursor:pointer;accent-color:var(--accent);}
 .shop-item-name{font-size:12px;color:var(--text);border:none;background:transparent;outline:none;font-family:'Noto Sans TC',sans-serif;flex:1;min-width:36px;}
 .shop-item-name::placeholder{color:var(--text3);}
@@ -323,7 +325,6 @@ const EXP_COLORS = ['--accent','--amber','--teal','--purple','--pink','--text2']
 
 let state = { tripName:'', members:[], days:[], shopping_xuan:[], shopping_peng:[], expense:[] };
 let shopPersonIdx = 0;
-let dragSrc = null;
 let jpyRate = 0.22; // fallback
 
 async function fetchJpyRate(){
@@ -506,13 +507,14 @@ function renderDays(){
       const whoHtml = (state.members||[]).map(m=>`
         <span class="ap ${(item.who||[]).includes(m)?'on':''}" onclick="toggleWho(${di},${ii},'${esc(m)}')">${esc(m)}</span>`).join('');
       const cancelled = item.status==='cancelled';
-      return `<div class="item-row ${cancelled?'cancelled':''}" draggable="true"
-        ondragstart="itemDragStart(event,${di},${ii})"
-        ondragover="itemDragOver(event)"
-        ondrop="itemDragDrop(event,${di},${ii})"
-        ondragend="itemDragEnd(event)">
+      const isFirst = ii===0;
+      const isLast = ii===(day.items.length-1);
+      return `<div class="item-row ${cancelled?'cancelled':''}">
         <div class="item-top">
-          <span class="item-drag-handle">⠿</span>
+          <div class="item-arrows">
+            <button class="arr-btn" onclick="moveItem(${di},${ii},-1)" ${isFirst?'disabled':''}>▲</button>
+            <button class="arr-btn" onclick="moveItem(${di},${ii},1)" ${isLast?'disabled':''}>▼</button>
+          </div>
           <input class="item-time" value="${esc(item.time)}" placeholder="時間" onchange="updF(${di},${ii},'time',this.value)" style="border:none;background:transparent;outline:none;font-family:'Noto Sans TC',sans-serif;font-size:12px;color:var(--text3);width:42px;padding:0;">
           <input class="item-name-input" value="${esc(item.name)}" placeholder="行程名稱" onchange="updF(${di},${ii},'name',this.value)">
           <button class="item-del-btn" onclick="delItem(${di},${ii})">×</button>
@@ -580,21 +582,14 @@ window.delDay = (di)=>{
 function getShopKey(){ return shopPersonIdx===0?'shopping_xuan':'shopping_peng'; }
 function dragStart(e,si,ii){ dragSrc={si,ii}; e.currentTarget.style.opacity='0.4'; }
 
-let itemDragSrc = null;
-function itemDragStart(e,di,ii){ itemDragSrc={di,ii}; e.currentTarget.style.opacity='0.4'; e.stopPropagation(); }
-function itemDragEnd(e){ e.currentTarget.style.opacity='1'; }
-function itemDragOver(e){ e.preventDefault(); e.currentTarget.style.background='var(--accent-light)'; e.stopPropagation(); }
-function itemDragDrop(e,di,ii){
-  e.currentTarget.style.background='';
-  if(!itemDragSrc||itemDragSrc.di!==di) return;
-  const from=itemDragSrc.ii, to=ii;
-  if(from===to) return;
+window.moveItem=function(di,ii,dir){
   const items=state.days[di].items;
-  const moved=items.splice(from,1)[0];
+  const to=ii+dir;
+  if(to<0||to>=items.length) return;
+  const moved=items.splice(ii,1)[0];
   items.splice(to,0,moved);
-  itemDragSrc=null;
   renderDays(); save();
-}
+};
 function dragEnd(e){ e.currentTarget.style.opacity='1'; }
 function dragOver(e){ e.preventDefault(); e.currentTarget.style.background='var(--accent-light)'; }
 function dragDrop(e,si,ii){
@@ -633,13 +628,14 @@ function renderShopping(){
     const rows=items.map((item,ii)=>{
       const cur = item.currency||'TWD';
       const subtotal = Math.round(toTWD(item.budget,cur,item.qty||1)).toLocaleString();
+      const shopFirst = ii===0;
+      const shopLast = ii===(items.length-1);
       return `
-      <div class="shop-item ${item.checked?'done':''}" draggable="true"
-        ondragstart="dragStart(event,${si},${ii})"
-        ondragover="dragOver(event)"
-        ondrop="dragDrop(event,${si},${ii})"
-        ondragend="dragEnd(event)">
-        <span class="drag-handle">⠿</span>
+      <div class="shop-item ${item.checked?'done':''}">
+        <div class="item-arrows">
+          <button class="arr-btn" onclick="moveShopItem(${si},${ii},-1)" ${shopFirst?'disabled':''}>▲</button>
+          <button class="arr-btn" onclick="moveShopItem(${si},${ii},1)" ${shopLast?'disabled':''}>▼</button>
+        </div>
         <input type="checkbox" class="shop-cb" ${item.checked?'checked':''} onchange="toggleShop(${si},${ii},this.checked)">
         <input type="text" class="shop-item-name" value="${esc(item.name)}" placeholder="品項" onchange="updShop(${si},${ii},'name',this.value)">
         <select class="shop-currency-sel" onchange="updShop(${si},${ii},'currency',this.value)">
