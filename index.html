@@ -95,10 +95,11 @@ body{font-family:'Noto Sans TC',sans-serif;background:var(--bg);color:var(--text
 
 /* ── ITEM ROW (mobile card style) ── */
 .item-list{padding:4px 0;}
-.item-row{padding:10px 14px;border-bottom:1px solid var(--border);position:relative;}
+.item-row{padding:10px 14px;border-bottom:1px solid var(--border);position:relative;cursor:default;}
+.item-drag-handle{font-size:14px;color:var(--border2);cursor:grab;user-select:none;flex-shrink:0;margin-right:2px;}
 .item-row:last-child{border-bottom:none;}
 .item-row.cancelled{opacity:0.4;}
-.item-top{display:flex;align-items:flex-start;gap:8px;margin-bottom:6px;}
+.item-top{display:flex;align-items:center;gap:6px;margin-bottom:6px;}
 .item-time{font-size:12px;color:var(--text3);flex-shrink:0;padding-top:2px;min-width:38px;}
 .item-name-input{font-size:15px;font-weight:500;color:var(--text);border:none;background:transparent;outline:none;font-family:'Noto Sans TC',sans-serif;flex:1;min-width:0;padding:0;}
 .item-name-input::placeholder{color:var(--text3);font-weight:400;}
@@ -505,8 +506,13 @@ function renderDays(){
       const whoHtml = (state.members||[]).map(m=>`
         <span class="ap ${(item.who||[]).includes(m)?'on':''}" onclick="toggleWho(${di},${ii},'${esc(m)}')">${esc(m)}</span>`).join('');
       const cancelled = item.status==='cancelled';
-      return `<div class="item-row ${cancelled?'cancelled':''}">
+      return `<div class="item-row ${cancelled?'cancelled':''}" draggable="true"
+        ondragstart="itemDragStart(event,${di},${ii})"
+        ondragover="itemDragOver(event)"
+        ondrop="itemDragDrop(event,${di},${ii})"
+        ondragend="itemDragEnd(event)">
         <div class="item-top">
+          <span class="item-drag-handle">⠿</span>
           <input class="item-time" value="${esc(item.time)}" placeholder="時間" onchange="updF(${di},${ii},'time',this.value)" style="border:none;background:transparent;outline:none;font-family:'Noto Sans TC',sans-serif;font-size:12px;color:var(--text3);width:42px;padding:0;">
           <input class="item-name-input" value="${esc(item.name)}" placeholder="行程名稱" onchange="updF(${di},${ii},'name',this.value)">
           <button class="item-del-btn" onclick="delItem(${di},${ii})">×</button>
@@ -573,6 +579,22 @@ window.delDay = (di)=>{
 // ── Shopping ──
 function getShopKey(){ return shopPersonIdx===0?'shopping_xuan':'shopping_peng'; }
 function dragStart(e,si,ii){ dragSrc={si,ii}; e.currentTarget.style.opacity='0.4'; }
+
+let itemDragSrc = null;
+function itemDragStart(e,di,ii){ itemDragSrc={di,ii}; e.currentTarget.style.opacity='0.4'; e.stopPropagation(); }
+function itemDragEnd(e){ e.currentTarget.style.opacity='1'; }
+function itemDragOver(e){ e.preventDefault(); e.currentTarget.style.background='var(--accent-light)'; e.stopPropagation(); }
+function itemDragDrop(e,di,ii){
+  e.currentTarget.style.background='';
+  if(!itemDragSrc||itemDragSrc.di!==di) return;
+  const from=itemDragSrc.ii, to=ii;
+  if(from===to) return;
+  const items=state.days[di].items;
+  const moved=items.splice(from,1)[0];
+  items.splice(to,0,moved);
+  itemDragSrc=null;
+  renderDays(); save();
+}
 function dragEnd(e){ e.currentTarget.style.opacity='1'; }
 function dragOver(e){ e.preventDefault(); e.currentTarget.style.background='var(--accent-light)'; }
 function dragDrop(e,si,ii){
