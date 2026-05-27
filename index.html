@@ -104,7 +104,9 @@ body{font-family:'Noto Sans TC',sans-serif;background:var(--bg);color:var(--text
 .item-row:last-child{border-bottom:none;}
 .item-row.cancelled{opacity:0.4;}
 .item-top{display:flex;align-items:center;gap:6px;margin-bottom:6px;}
-.item-time{font-size:12px;color:var(--text3);flex-shrink:0;padding-top:2px;min-width:38px;}
+.item-time-day{font-size:13px;font-weight:700;color:#d4700a;flex-shrink:0;min-width:40px;border:none;background:transparent;outline:none;font-family:'Noto Sans TC',sans-serif;padding:0;}
+.item-time-night{font-size:13px;font-weight:700;color:#2a5c8f;flex-shrink:0;min-width:40px;border:none;background:transparent;outline:none;font-family:'Noto Sans TC',sans-serif;padding:0;}
+.item-time-empty{font-size:13px;font-weight:700;color:#ccc8be;flex-shrink:0;min-width:40px;border:none;background:transparent;outline:none;font-family:'Noto Sans TC',sans-serif;padding:0;}
 .item-name-input{font-size:15px;font-weight:500;color:var(--text);border:none;background:transparent;outline:none;font-family:'Noto Sans TC',sans-serif;flex:1;min-width:0;padding:0;}
 .item-name-input::placeholder{color:var(--text3);font-weight:400;}
 .item-del-btn{width:26px;height:26px;border-radius:50%;border:none;background:transparent;cursor:pointer;color:var(--text3);font-size:18px;display:flex;align-items:center;justify-content:center;flex-shrink:0;padding:0;}
@@ -553,7 +555,8 @@ function renderDays(){
             <button class="arr-btn" onclick="moveItem(${di},${ii},-1)" ${isFirst?'disabled':''}>▲</button>
             <button class="arr-btn" onclick="moveItem(${di},${ii},1)" ${isLast?'disabled':''}>▼</button>
           </div>
-          <input class="item-time" value="${esc(item.time)}" placeholder="時間" onchange="updF(${di},${ii},'time',this.value)" style="border:none;background:transparent;outline:none;font-family:'Noto Sans TC',sans-serif;font-size:12px;color:var(--text3);width:42px;padding:0;">
+          <span style="font-size:12px;flex-shrink:0;">${(()=>{const t=item.time||'';const h=parseInt(t.split(':')[0]);if(!t||isNaN(h))return '';return (h>=6&&h<18)?'☀️':'🌙';})()}</span>
+          <input class="${(()=>{const t=item.time||'';const h=parseInt(t.split(':')[0]);if(!t||isNaN(h))return 'item-time-empty';return (h>=6&&h<18)?'item-time-day':'item-time-night';})()} " value="${esc(item.time)}" placeholder="--:--" onchange="updF(${di},${ii},'time',this.value);renderDays();">
           <input class="item-name-input" value="${esc(item.name)}" placeholder="行程名稱" onchange="updF(${di},${ii},'name',this.value)">
           <button class="item-del-btn" onclick="delItem(${di},${ii})">×</button>
         </div>
