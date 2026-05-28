@@ -104,13 +104,14 @@ body{font-family:'Noto Sans TC',sans-serif;background:var(--bg);color:var(--text
 .item-row:last-child{border-bottom:none;}
 .item-row.cancelled{opacity:0.4;}
 .item-top{display:flex;align-items:center;gap:6px;margin-bottom:6px;}
-.item-time-day{font-size:13px;font-weight:700;color:#d4700a;flex-shrink:0;min-width:40px;border:none;background:transparent;outline:none;font-family:'Noto Sans TC',sans-serif;padding:0;}
-.item-time-night{font-size:13px;font-weight:700;color:#2a5c8f;flex-shrink:0;min-width:40px;border:none;background:transparent;outline:none;font-family:'Noto Sans TC',sans-serif;padding:0;}
-.item-time-empty{font-size:13px;font-weight:700;color:#ccc8be;flex-shrink:0;min-width:40px;border:none;background:transparent;outline:none;font-family:'Noto Sans TC',sans-serif;padding:0;}
-.item-name-input{font-size:14px;font-weight:500;color:var(--text);border:none;background:transparent;outline:none;font-family:'Noto Sans TC',sans-serif;flex:1;min-width:0;padding:0;}
+.item-time-day{font-size:13px;font-weight:700;color:#d4700a;flex-shrink:0;width:40px;border:none;background:transparent;outline:none;font-family:'Noto Sans TC',sans-serif;padding:0;}
+.item-time-night{font-size:13px;font-weight:700;color:#2a5c8f;flex-shrink:0;width:40px;border:none;background:transparent;outline:none;font-family:'Noto Sans TC',sans-serif;padding:0;}
+.item-time-empty{font-size:13px;font-weight:700;color:#ccc8be;flex-shrink:0;width:40px;border:none;background:transparent;outline:none;font-family:'Noto Sans TC',sans-serif;padding:0;}
+.item-name-input{font-size:14px;font-weight:500;color:var(--text);border:none;background:transparent;outline:none;font-family:'Noto Sans TC',sans-serif;flex:1;min-width:0;max-width:100%;padding:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .item-name-input::placeholder{color:var(--text3);font-weight:400;}
 .item-name-day{color:#d4700a;}
 .item-name-night{color:#2a5c8f;}
+.item-top{display:flex;align-items:center;gap:6px;margin-bottom:6px;overflow:hidden;}
 .item-del-btn{width:26px;height:26px;border-radius:50%;border:none;background:transparent;cursor:pointer;color:var(--text3);font-size:18px;display:flex;align-items:center;justify-content:center;flex-shrink:0;padding:0;}
 .item-del-btn:active{background:var(--red-light);color:var(--red);}
 .item-meta{display:flex;flex-wrap:wrap;gap:5px;margin-left:46px;}
