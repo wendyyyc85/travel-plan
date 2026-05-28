@@ -107,8 +107,10 @@ body{font-family:'Noto Sans TC',sans-serif;background:var(--bg);color:var(--text
 .item-time-day{font-size:13px;font-weight:700;color:#d4700a;flex-shrink:0;min-width:40px;border:none;background:transparent;outline:none;font-family:'Noto Sans TC',sans-serif;padding:0;}
 .item-time-night{font-size:13px;font-weight:700;color:#2a5c8f;flex-shrink:0;min-width:40px;border:none;background:transparent;outline:none;font-family:'Noto Sans TC',sans-serif;padding:0;}
 .item-time-empty{font-size:13px;font-weight:700;color:#ccc8be;flex-shrink:0;min-width:40px;border:none;background:transparent;outline:none;font-family:'Noto Sans TC',sans-serif;padding:0;}
-.item-name-input{font-size:15px;font-weight:500;color:var(--text);border:none;background:transparent;outline:none;font-family:'Noto Sans TC',sans-serif;flex:1;min-width:0;padding:0;}
+.item-name-input{font-size:14px;font-weight:500;color:var(--text);border:none;background:transparent;outline:none;font-family:'Noto Sans TC',sans-serif;flex:1;min-width:0;padding:0;}
 .item-name-input::placeholder{color:var(--text3);font-weight:400;}
+.item-name-day{color:#d4700a;}
+.item-name-night{color:#2a5c8f;}
 .item-del-btn{width:26px;height:26px;border-radius:50%;border:none;background:transparent;cursor:pointer;color:var(--text3);font-size:18px;display:flex;align-items:center;justify-content:center;flex-shrink:0;padding:0;}
 .item-del-btn:active{background:var(--red-light);color:var(--red);}
 .item-meta{display:flex;flex-wrap:wrap;gap:5px;margin-left:46px;}
@@ -555,9 +557,17 @@ function renderDays(){
             <button class="arr-btn" onclick="moveItem(${di},${ii},-1)" ${isFirst?'disabled':''}>▲</button>
             <button class="arr-btn" onclick="moveItem(${di},${ii},1)" ${isLast?'disabled':''}>▼</button>
           </div>
-          <span style="font-size:12px;flex-shrink:0;">${(()=>{const t=item.time||'';const h=parseInt(t.split(':')[0]);if(!t||isNaN(h))return '';return (h>=6&&h<18)?'☀️':'🌙';})()}</span>
-          <input class="${(()=>{const t=item.time||'';const h=parseInt(t.split(':')[0]);if(!t||isNaN(h))return 'item-time-empty';return (h>=6&&h<18)?'item-time-day':'item-time-night';})()} " value="${esc(item.time)}" placeholder="--:--" onchange="updF(${di},${ii},'time',this.value);renderDays();">
-          <input class="item-name-input" value="${esc(item.name)}" placeholder="行程名稱" onchange="updF(${di},${ii},'name',this.value)">
+          ${(()=>{
+            const t=item.time||'';
+            const h=parseInt(t.split(':')[0]);
+            const isDay=!t||isNaN(h)?null:(h>=6&&h<18);
+            const timeCls=(!t||isNaN(h))?'item-time-empty':(isDay?'item-time-day':'item-time-night');
+            const nameCls=(!t||isNaN(h))?'':(isDay?'item-name-day':'item-name-night');
+            const icon=(!t||isNaN(h))?'':(isDay?'☀️':'🌙');
+            return `<span style="font-size:12px;flex-shrink:0;">${icon}</span>
+            <input class="${timeCls}" value="${esc(item.time)}" placeholder="--:--" onchange="updF(${di},${ii},'time',this.value);renderDays();">
+            <input class="item-name-input ${nameCls}" value="${esc(item.name)}" placeholder="行程名稱" onchange="updF(${di},${ii},'name',this.value)">`;
+          })()}
           <button class="item-del-btn" onclick="delItem(${di},${ii})">×</button>
         </div>
         <div class="item-meta">
