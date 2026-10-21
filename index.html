@@ -2,7 +2,7 @@
 <html lang="zh-TW">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="theme-color" content="#ffffff">
 <title>✈ 旅遊規劃</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=DM+Serif+Display&display=swap" rel="stylesheet">
@@ -21,7 +21,9 @@
   --shadow:0 1px 3px rgba(0,0,0,0.08),0 2px 8px rgba(0,0,0,0.05);
   --font:'Noto Sans TC',-apple-system,sans-serif;
 }
+html,body{overflow-x:hidden;touch-action:pan-y;}
 html{-webkit-text-size-adjust:100%;}
+.sheet-body{touch-action:pan-y;}
 body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent;}
 button{font-family:var(--font);cursor:pointer;color:inherit;}
 /* iOS 不自動放大：所有輸入框 16px */
@@ -282,6 +284,7 @@ const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
 const ROOT = 'trips';
+const APP_VERSION = '2026.10.21c';
 const CATS_ITEM = ['交通','餐廳','住宿','景點','購物','其他'];
 const CATS_EXP  = ['交通','餐飲','住宿','門票','購物','其他'];
 const WD = ['日','一','二','三','四','五','六'];
@@ -866,7 +869,8 @@ window.openSettings=function(){
     <button class="btn wide" onclick="logout()">🚪 登出這支手機</button>
 
     <div class="fld-label">備份</div>
-    <button class="btn wide" onclick="exportBackup()">💾 下載備份檔（JSON）</button>`;
+    <button class="btn wide" onclick="exportBackup()">💾 下載備份檔（JSON）</button>
+    <div class="hint" style="text-align:center;margin-top:16px">版本 ${APP_VERSION}</div>`;
   openSheet('settings','設定',html);
 };
 window.setTripDate=function(which,val){
@@ -1017,6 +1021,10 @@ onValue(ref(db,'.info/connected'),s=>{
 });
 
 // ═════════ 啟動 ═════════
+// iPhone：擋掉雙指縮放
+['gesturestart','gesturechange','gestureend'].forEach(ev=>document.addEventListener(ev,e=>e.preventDefault(),{passive:false}));
+document.addEventListener('touchmove',e=>{ if(e.touches.length>1) e.preventDefault(); },{passive:false});
+
 (function boot(){
   const saved=LS.get('page'); if(saved && $('page-'+saved)) switchPage(saved);
   const params=new URLSearchParams(location.search);
