@@ -773,7 +773,7 @@ window.openExpense=function(id,isNew){
       <div class="chip-row">${mem.map(([mid,x])=>`<button class="chip ${e.split?.[mid]?'on':''}" onclick="toggleExpSplit('${mid}',this)">${esc(x.name)}</button>`).join('')}</div>`
       :'<p class="hint">先到設定新增旅伴，才能記錄誰付錢、誰分攤。</p>'}
     <div class="fld-label">日期</div>
-    <select class="fld" onchange="write('expenses/${id}/date',this.value)">
+    <select class="fld" onchange="saveField('expenses/${id}/date',this.value)">
       <option value="" ${!e.date?'selected':''}>行前 / 其他</option>
       ${dates.map((d,i)=>`<option value="${d}" ${d===e.date?'selected':''}>D${i+1} ${md(d)}</option>`).join('')}
     </select>
@@ -799,9 +799,9 @@ function renderInfo(){
   $('todoBox').innerHTML=`<div class="card">
     <div class="card-hdr"><span class="card-title">📋 待辦清單</span><span class="muted">${done}/${todos.length}</span></div>
     ${todos.map(([id,t])=>`<div class="todo ${t.done?'done':''}">
-      <input type="checkbox" class="todo-cb" ${t.done?'checked':''} onchange="write('todos/${id}/done',this.checked)">
+      <input type="checkbox" class="todo-cb" ${t.done?'checked':''} onchange="saveField('todos/${id}/done',this.checked)">
       <input class="todo-text" value="${esc(t.text)}" oninput="deb('todos/${id}/text',this.value)">
-      ${mem.length?`<select class="owner-sel ${t.owner&&state.members?.[t.owner]?'set':''}" onchange="write('todos/${id}/owner',this.value||null)">
+      ${mem.length?`<select class="owner-sel ${t.owner&&state.members?.[t.owner]?'set':''}" onchange="saveField('todos/${id}/owner',this.value||null)">
         <option value="">誰負責</option>${mem.map(([mid,x])=>`<option value="${mid}" ${t.owner===mid?'selected':''}>${esc(x.name)}</option>`).join('')}</select>`:''}
       <button class="x-btn" onclick="removeWithUndo('todos/${id}', ${esc(JSON.stringify(t.text||''))})" aria-label="刪除">×</button>
     </div>`).join('')}
@@ -819,7 +819,7 @@ function renderInfo(){
   $('infoList').querySelectorAll('textarea').forEach(t=>requestAnimationFrame(()=>autoGrow(t)));
 }
 window.removeWithUndo=removeWithUndo;
-window.write=write;
+window.saveField=write;
 window.addTodo=function(){
   const inp=$('todoInput'); const text=inp.value.trim(); if(!text) return;
   const order=Object.values(state.todos||{}).reduce((m,t)=>Math.max(m,t.order||0),0)+1;
